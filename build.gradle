@@ -6,7 +6,7 @@ plugins {
 
 application.mainClass = "net.vadamdev.goatsbot.Main"
 group 'net.vadamdev.goatsbot'
-version '1.0.0'
+version '1.0.1'
 
 repositories {
     mavenCentral()
@@ -17,12 +17,16 @@ repositories {
 }
 
 dependencies {
-    implementation group: 'net.dv8tion', name: 'JDA', version: '5.0.0-beta.21'
+    implementation(group: 'net.dv8tion', name: 'JDA', version: '5.0.0-beta.21') { exclude module: "opus-java" }
     implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.3.14'
 
     implementation group: 'me.carleslc.Simple-YAML', name: 'Simple-Yaml', version: '1.8.4'
     implementation group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.2'
 }
 
-sourceCompatibility = targetCompatibility = 1.8
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
 compileJava.options.encoding = 'UTF-8'
