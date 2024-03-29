@@ -13,6 +13,7 @@ import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.interactions.components.LayoutComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.vadamdev.goatsbot.GoatsBot;
 import net.vadamdev.goatsbot.Main;
 import net.vadamdev.goatsbot.utils.GoatsEmbed;
 
@@ -78,11 +79,13 @@ public abstract class AbstractPoll {
     private void computeVote(String buttonId, User user) {
         try {
             final int index = Integer.parseInt(buttonId);
+            final boolean containedBefore = entries[index].getUsers().contains(user);
 
             for(PollEntry entry : entries)
                 entry.getUsers().remove(user);
 
-            entries[index].getUsers().add(user);
+            if(!containedBefore)
+                entries[index].getUsers().add(user);
         }catch(NumberFormatException e) {
             e.printStackTrace();
         }
@@ -179,7 +182,9 @@ public abstract class AbstractPoll {
                 ).queue();
     }
 
-    //Only work with this layout: GoatsBot-Poll-Settings-BUTTON_NAME-messageId
+    /**
+     * Only work with this layout: GoatsBot-Poll-Settings-BUTTON_NAME-messageId
+     */
     protected void onSettingsButtonClicked(@Nonnull ButtonInteractionEvent event, String componentId) {
         if(!componentId.equals("GoatsBot-Poll-Settings-Delete"))
             return;

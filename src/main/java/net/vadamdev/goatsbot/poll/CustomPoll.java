@@ -13,7 +13,6 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
-import net.dv8tion.jda.api.interactions.modals.ModalInteraction;
 import net.dv8tion.jda.api.interactions.modals.ModalMapping;
 import net.vadamdev.goatsbot.Main;
 import net.vadamdev.goatsbot.poll.system.AbstractPoll;
@@ -24,7 +23,6 @@ import net.vadamdev.goatsbot.utils.Utils;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
-import java.text.ParseException;
 import java.util.Date;
 import java.util.Set;
 
@@ -131,10 +129,12 @@ public class CustomPoll extends AbstractPoll implements ITimeLimitedPoll {
                 .setTitle("Sondage - Paramètres")
                 .setDescription(
                         "**Boutons:**\n" +
+                        "> \uD83D\uDCCB *: Voir les résultats*\n" +
                         "> \uD83D\uDD8A *: Modifier le sondage*\n" +
                         "> \uD83D\uDD12️ *: Ferme le sondage*"
                 )
                 .setColor(GoatsEmbed.NEUTRAL_COLOR).build()).setEphemeral(true).setActionRow(
+                        Button.secondary("GoatsBot-Poll-Settings-Results-" + messageId, Emoji.fromUnicode("\uD83D\uDCCB")),
                         Button.secondary("GoatsBot-Poll-Settings-Edit-" + messageId, Emoji.fromUnicode("\uD83D\uDD8A")),
                         Button.danger("GoatsBot-Poll-Settings-Delete-" + messageId, Emoji.fromUnicode("\uD83D\uDD12"))
                 ).queue();
@@ -142,30 +142,61 @@ public class CustomPoll extends AbstractPoll implements ITimeLimitedPoll {
 
     @Override
     protected void onSettingsButtonClicked(@Nonnull ButtonInteractionEvent event, String componentId) {
-        if(componentId.equals("GoatsBot-Poll-Settings-Edit")) {
-            event.replyModal(
-                    Modal.create("GoatsBot-EditCustomPollModal-" + messageId, "Sondage Custom")
-                            .addComponents(
-                                    ActionRow.of(TextInput.create("title", "Nom", TextInputStyle.SHORT)
-                                            .setRequiredRange(1, 48)
-                                            .setValue(title)
-                                            .build()),
+        switch(componentId) {
+            case "GoatsBot-Poll-Settings-Results":
+                final StringBuilder description = new StringBuilder();
 
-                                    ActionRow.of(TextInput.create("description", "Description", TextInputStyle.PARAGRAPH)
-                                            .setRequiredRange(1, 2048)
-                                            .setValue(description)
-                                            .build()),
+                for(PollEntry entry : entries) {
+                    final Set<User> voters = entry.getUsers();
+                    final int votersSize = voters.size();
 
-                                    ActionRow.of(TextInput.create("date", "Date", TextInputStyle.SHORT)
-                                            .setRequiredRange(16, 16)
-                                            .setPlaceholder(Utils.formatDate(date != null ? date : new Date()))
-                                            .setValue(date != null ? Utils.formatDate(date) : null)
-                                            .setRequired(false)
-                                            .build())
-                            ).build()
-            ).queue();
-        }else
-            super.onSettingsButtonClicked(event, componentId);
+                    description.append("> " + entry.getFormattedIcon() + " " + entry.getTitle() + " (" + votersSize + ")" + "\n");
+
+                    if(!voters.isEmpty()) {
+                        description.append("> " + Utils.displayCollection(voters,
+                                (builder, user) -> builder.append(user.getAsMention() + ", "),
+                                (builder, user) -> builder.append(user.getAsMention()))
+                        );
+                    }else
+                        description.append("> \u200E");
+
+                    description.append("\n\n");
+                }
+
+                event.replyEmbeds(new GoatsEmbed()
+                        .setTitle("\uD83D\uDCCA | " + title + " - Résultats")
+                        .setDescription(description.toString())
+                        .setColor(GoatsEmbed.NEUTRAL_COLOR).build()).setEphemeral(true).queue();
+
+                break;
+            case "GoatsBot-Poll-Settings-Edit":
+                event.replyModal(
+                        Modal.create("GoatsBot-EditCustomPollModal-" + messageId, "Sondage Custom")
+                                .addComponents(
+                                        ActionRow.of(TextInput.create("title", "Nom", TextInputStyle.SHORT)
+                                                .setRequiredRange(1, 48)
+                                                .setValue(title)
+                                                .build()),
+
+                                        ActionRow.of(TextInput.create("description", "Description", TextInputStyle.PARAGRAPH)
+                                                .setRequiredRange(1, 2048)
+                                                .setValue(this.description)
+                                                .build()),
+
+                                        ActionRow.of(TextInput.create("date", "Date", TextInputStyle.SHORT)
+                                                .setRequiredRange(16, 16)
+                                                .setPlaceholder(Utils.formatDate(date != null ? date : new Date()))
+                                                .setValue(date != null ? Utils.formatDate(date) : null)
+                                                .setRequired(false)
+                                                .build())
+                                ).build()
+                ).queue();
+
+                break;
+            default:
+                super.onSettingsButtonClicked(event, componentId);
+                break;
+        }
     }
 
     @Nullable

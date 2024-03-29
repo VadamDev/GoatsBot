@@ -21,7 +21,6 @@ import net.vadamdev.jdautils.commands.data.ICommandData;
 import net.vadamdev.jdautils.commands.data.SlashCmdData;
 
 import javax.annotation.Nonnull;
-import java.text.ParseException;
 import java.util.Date;
 
 /**
